@@ -6,144 +6,196 @@ typedef vector<int> vi;
 
 constexpr int MAXN = 1e3 + 10;
 constexpr ll mod = 1e9 + 7;
-int n, sz[MAXN];
-pii vet[MAXN];
-ll ans, fat[MAXN], ifat[MAXN];
+int numNetos, tamanhoGrupo[MAXN];
+pii frutasNetos[MAXN];
+ll resposta, fatorial[MAXN], inversoFatorial[MAXN];
 
-struct frac
+struct Fracao
 {
-    ll num, den;
-    frac() = default;
-    frac(ll a, ll b) : num(a), den(b) {}
-    bool operator<(const frac &f) const { return num * f.den < f.num * den; }
-    bool operator==(const frac &f) const { return num * f.den == f.num * den; }
+    ll numerador, denominador;
+    Fracao() = default;
+    Fracao(ll a, ll b) : numerador(a), denominador(b) {}
+    bool operator<(const Fracao &f) const { return numerador * f.denominador < f.numerador * denominador; }
+    bool operator==(const Fracao &f) const { return numerador * f.denominador == f.numerador * denominador; }
 };
 
-int pnts_sz;
-frac pnts[MAXN * MAXN];
-map<int, vi> ints[MAXN * MAXN];
-vector<vi> gps[MAXN * MAXN];
+int tamanhoPontos;
+Fracao pontos[MAXN * MAXN];
+map<int, vi> intervalos[MAXN * MAXN];
+vector<vi> grupos[MAXN * MAXN];
 
-ll modpow(ll b, ll e)
+// Função para calcular a exponenciação modular (b^e % mod)
+ll modpow(ll base, ll expoente)
 {
-    ll ret = 1;
-    while (e > 0)
+    ll resultado = 1;
+    while (expoente > 0)
     {
-        if (e & 1)
-            ret = (ret * b) % mod;
-        b = (b * b) % mod;
-        e >>= 1;
+        if (expoente & 1)
+            resultado = (resultado * base) % mod;
+        base = (base * base) % mod;
+        expoente >>= 1;
     }
-    return ret;
+    return resultado;
 }
 
 int main()
 {
-    fat[0] = ifat[0] = 1;
+    // Pré-computação dos fatoriais e inversos dos fatoriais
+    fatorial[0] = inversoFatorial[0] = 1;
     for (int i = 1; i < MAXN; i++)
     {
-        fat[i] = (i * fat[i - 1]) % mod;
-        ifat[i] = modpow(fat[i], mod - 2);
+        fatorial[i] = (i * fatorial[i - 1]) % mod;
+        inversoFatorial[i] = modpow(fatorial[i], mod - 2);
     }
-    const auto no_inter = [](int i, int j)
+
+    // Função para verificar se dois netos são intercambiáveis
+    const auto naoSaoIntercambiaveis = [](int i, int j)
     {
-        return (vet[j].first <= vet[i].first && vet[j].second <= vet[i].second) ||
-               (vet[i].first <= vet[j].first && vet[i].second <= vet[j].second);
+        return (frutasNetos[j].first <= frutasNetos[i].first && frutasNetos[j].second <= frutasNetos[i].second) ||
+               (frutasNetos[i].first <= frutasNetos[j].first && frutasNetos[i].second <= frutasNetos[j].second);
     };
-    scanf("%d", &n);
+
+    // Entrada do número de netos
+    scanf("%d", &numNetos);
     int it = 0;
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < numNetos; i++)
     {
-        scanf("%d%d", &vet[it].first, &vet[it].second);
-        sz[it] = 1;
+        // Entrada das quantidades de frutas coletadas por cada neto
+        scanf("%d%d", &frutasNetos[it].first, &frutasNetos[it].second);
+        tamanhoGrupo[it] = 1;
+
+        // Verifica se o neto atual tem as mesmas quantidades que algum neto anterior
         for (int j = 0; j < it; j++)
         {
-            if (vet[j].first == vet[it].first && vet[j].second == vet[it].second)
+            if (frutasNetos[j].first == frutasNetos[it].first && frutasNetos[j].second == frutasNetos[it].second)
             {
-                sz[j] += sz[it];
-                sz[it] = 0;
+                // Se as quantidades coincidirem, mescla os netos no mesmo grupo
+                tamanhoGrupo[j] += tamanhoGrupo[it];
+                tamanhoGrupo[it] = 0;
                 it--;
                 break;
             }
-            if (no_inter(it, j))
+
+            // Verifica se o neto atual e o neto anterior são intercambiáveis
+            if (naoSaoIntercambiaveis(it, j))
                 continue;
-            int da = vet[it].first - vet[j].first;
-            int db = vet[j].second - vet[it].second;
-            if (da < 0)
-            {
-                da = -da;
-                db = -db;
-            }
-            int d = __gcd(da, db);
-            da /= d;
-            db /= d;
-            pnts[pnts_sz++] = {db, da + db};
+
+            // Calcula a diferença nas quantidades de frutas
+            int diferencaA = frutasNetos[it].first - frutasNetos[j].first;
+            int diferencaB = frutasNetos[j].second - frutasNetos[it].second;
+
+            // Simplifica a diferença para sua forma mais simples
+            int divisor = __gcd(diferencaA, diferencaB);
+            diferencaA /= divisor;
+            diferencaB /= divisor;
+
+            // Armazena a fração representando a diferença nas quantidades
+            pontos[tamanhoPontos++] = {diferencaB, diferencaA + diferencaB};
         }
         it++;
     }
-    n = it;
-    sort(pnts, pnts + pnts_sz);
-    pnts_sz = (int)(unique(pnts, pnts + pnts_sz) - pnts);
-    ll tot = 1;
-    for (int i = 0; i < n; i++)
+
+    numNetos = it;
+
+    // Ordena as frações em ordem crescente
+    sort(pontos, pontos + tamanhoPontos);
+
+    // Remove as duplicatas das frações
+    tamanhoPontos = (int)(unique(pontos, pontos + tamanhoPontos) - pontos);
+
+    ll total = 1;
+    for (int i = 0; i < numNetos; i++)
     {
-        tot = (tot * fat[sz[i]]) % mod;
+        // Calcula o fatorial total dos tamanhos de cada grupo
+        total = (total * fatorial[tamanhoGrupo[i]]) % mod;
     }
-    ans = tot;
-    ll neg_tot = (mod - tot) % mod;
-    for (int i = 0; i < n; i++)
+
+    resposta = total;
+    ll totalNegativo = (mod - total) % mod;
+
+    // Constrói grupos com base nas frações que representam as diferenças nas quantidades
+    for (int i = 0; i < numNetos; i++)
     {
         for (int j = 0; j < i; j++)
         {
-            if (no_inter(i, j))
+            if (naoSaoIntercambiaveis(i, j))
                 continue;
-            int da = vet[i].first - vet[j].first;
-            int db = vet[j].second - vet[i].second;
-            if (da < 0)
+
+            // Calcula a diferença nas quantidades de frutas
+            int diferencaA = frutasNetos[i].first - frutasNetos[j].first;
+            int diferencaB = frutasNetos[j].second - frutasNetos[i].second;
+
+            if (diferencaA < 0)
             {
-                da = -da;
-                db = -db;
+                diferencaA = -diferencaA;
+                diferencaB = -diferencaB;
             }
-            int d = __gcd(da, db);
-            da /= d;
-            db /= d;
-            frac f{db, da + db};
-            int p = (int)(lower_bound(pnts, pnts + pnts_sz, f) - pnts);
-            int fx = db * vet[i].first + da * vet[i].second;
-            vi &s = ints[p][fx];
-            s.push_back(i);
-            s.push_back(j);
+
+            // Simplifica a diferença para sua forma mais simples
+            int divisor = __gcd(diferencaA, diferencaB);
+            diferencaA /= divisor;
+            diferencaB /= divisor;
+
+            Fracao fracao{diferencaB, diferencaA + diferencaB};
+
+            // Encontra o índice da fração no array de frações ordenadas
+            int indice = (int)(lower_bound(pontos, pontos + tamanhoPontos, fracao) - pontos);
+
+            // Calcula a função que relaciona a diferença com a posição relativa, usado para agrupar as diferenças equivalentes em um unico grupo
+            int fx = diferencaB * frutasNetos[i].first + diferencaA * frutasNetos[i].second;
+            vi &grupo = intervalos[indice][fx];
+
+            // Adiciona os netos ao grupo correspondente
+            grupo.push_back(i);
+            grupo.push_back(j);
         }
     }
-    for (int i = 0; i < pnts_sz; i++)
+
+    // Constrói grupos de netos com as mesmas frações
+    for (int i = 0; i < tamanhoPontos; i++)
     {
-        for (auto &&p : ints[i])
+        for (auto &&par : intervalos[i])
         {
-            vi &v = p.second;
+            vi &v = par.second;
+
+            // Ordena e remove duplicatas dos netos no grupo
             sort(v.begin(), v.end());
             v.resize(unique(v.begin(), v.end()) - v.begin());
-            gps[i].push_back(move(v));
+
+            // Adiciona o grupo ao array de grupos
+            grupos[i].push_back(move(v));
         }
     }
-    for (int i = 0; i < pnts_sz; i++)
+
+    // Calcula a resposta final considerando todos os grupos e combinações
+    for (int i = 0; i < tamanhoPontos; i++)
     {
-        ll cur = tot;
-        for (auto &&gp : gps[i])
+        ll atual = total;
+        // Itera sobre os grupos de netos com as mesmas frações
+        for (auto &&grupo : grupos[i])
         {
-            int cnt = 0;
-            for (int v : gp)
+            int contador = 0;
+            // Itera sobre os netos no grupo atual
+            for (int neto : grupo)
             {
-                cnt += sz[v];
-                cur = (cur * ifat[sz[v]]) % mod;
+                contador += tamanhoGrupo[neto];
+                // Atualiza o valor atual multiplicando pelo inverso do fatorial do tamanho do grupo do neto
+                atual = (atual * inversoFatorial[tamanhoGrupo[neto]]) % mod;
             }
-            cur = (cur * fat[cnt]) % mod;
+            // Atualiza o valor atual multiplicando pelo fatorial do contador (soma dos tamanhos dos grupos)
+            atual = (atual * fatorial[contador]) % mod;
         }
-        ans += cur;
-        if (ans >= mod)
-            ans -= mod;
-        ans += neg_tot;
-        if (ans >= mod)
-            ans -= mod;
+        // Adiciona o valor atual à resposta final
+        resposta += atual;
+        // Se a resposta final for maior ou igual a mod, é subtraído mod para manter o valor dentro do limite
+        if (resposta >= mod)
+            resposta -= mod;
+        // É adicionado o valor total negativo à resposta final e se repete o passo anterior.
+        resposta += totalNegativo;
+        if (resposta >= mod)
+            resposta -= mod;
     }
-    printf("%lld\n", ans);
+
+    // Imprime a resposta final
+    printf("%lld\n", resposta);
 }
