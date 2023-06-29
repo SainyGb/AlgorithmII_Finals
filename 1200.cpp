@@ -1,219 +1,209 @@
-#include <iostream>
-#include <vector>
-#include <string>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
-using namespace std;
+#define true 1
+#define false 0
+#define MAXSIZE 100
 
-typedef char Valor;
+typedef struct noArv{
 
-class No
+	char letra;
+	struct noArv *esquerda;
+	struct noArv *direita;
+
+} noArv;
+
+void infixa(noArv *);
+void prefixa(noArv *);
+void posfixa(noArv *);
+void printInfixa(char *);
+void printPrefixa(char *);
+void printPosfixa(char *);
+noArv* push(noArv *, char );
+bool busca(noArv *, char );
+
+char letrasInfixa[MAXSIZE] = { 0 };
+char letrasPosfixa[MAXSIZE] = { 0 };
+char letrasPrefixa[MAXSIZE] = { 0 };
+
+int i = 0;
+int j = 0;
+int k = 0;
+
+void teste(noArv *no)
 {
-public:
-    virtual Valor valor() = 0;
-    virtual No *esquerda() = 0;
-    virtual No *direita() = 0;
-    virtual No *inserir(Valor v) = 0;
-    virtual int altura() = 0;
-    virtual bool pesquisar(Valor v) = 0;
-    virtual vector<Valor> infixa() = 0;
-    virtual vector<Valor> prefixa() = 0;
-    virtual vector<Valor> posfixa() = 0;
-};
 
-class Arvore : public No
+	if (no)
+	{
+
+		teste(no->esquerda);
+		printf("%c ", no->letra);
+		teste(no->direita);
+
+	}
+
+}
+
+int main ()
 {
-private:
-    Valor valor_;
-    No *esquerda_;
-    No *direita_;
 
-public:
-    Arvore(Valor valor, No *esquerda, No *direita) : valor_(valor), esquerda_(esquerda), direita_(direita) {}
+	char comando[20], letra;
 
-    Valor valor() override
-    {
-        return valor_;
-    }
+	noArv *no = NULL;
+	while (scanf("%s%*c", comando) != EOF)
+	{
 
-    No *esquerda() override
-    {
-        return esquerda_;
-    }
+		if (strcmp(comando, "I") == 0)
+		{
 
-    No *direita() override
-    {
-        return direita_;
-    }
+			scanf("%c", &letra);
+			no = push(no, letra);
 
-    No *inserir(Valor v) override
-    {
-        if (v < valor_)
-        {
-            return new Arvore(valor_, esquerda_->inserir(v), direita_);
-        }
-        else
-        {
-            return new Arvore(valor_, esquerda_, direita_->inserir(v));
-        }
-    }
+		}
+		else if (strcmp(comando, "INFIXA") == 0)
+			infixa(no), printInfixa(letrasInfixa);
+		else if (strcmp(comando, "PREFIXA") == 0)
+			prefixa(no), printPrefixa(letrasPrefixa);
+		else if (strcmp(comando, "P") == 0)
+		{
 
-    int altura() override
-    {
-        return max(esquerda_->altura(), direita_->altura()) + 1;
-    }
+			scanf("%c", &letra);
+			if (busca(no, letra))
+				printf("%c existe\n", letra);
+			else
+				printf("%c nao existe\n", letra);
 
-    bool pesquisar(Valor v) override
-    {
-        return v == valor_ || (v < valor_ ? esquerda_->pesquisar(v) : direita_->pesquisar(v));
-    }
+		}
+		else
+			posfixa(no), printPosfixa(letrasPosfixa);
 
-    vector<Valor> infixa() override
-    {
-        vector<Valor> resultado = esquerda_->infixa();
-        resultado.push_back(valor_);
-        vector<Valor> direitaInfixa = direita_->infixa();
-        resultado.insert(resultado.end(), direitaInfixa.begin(), direitaInfixa.end());
-        return resultado;
-    }
-
-    vector<Valor> prefixa() override
-    {
-        vector<Valor> resultado;
-        resultado.push_back(valor_);
-        vector<Valor> esquerdaPrefixa = esquerda_->prefixa();
-        resultado.insert(resultado.end(), esquerdaPrefixa.begin(), esquerdaPrefixa.end());
-        vector<Valor> direitaPrefixa = direita_->prefixa();
-        resultado.insert(resultado.end(), direitaPrefixa.begin(), direitaPrefixa.end());
-        return resultado;
-    }
-
-    vector<Valor> posfixa() override
-    {
-        vector<Valor> resultado = esquerda_->posfixa();
-        vector<Valor> direitaPosfixa = direita_->posfixa();
-        resultado.insert(resultado.end(), direitaPosfixa.begin(), direitaPosfixa.end());
-        resultado.push_back(valor_);
-        return resultado;
-    }
-};
-
-class Folha : public No
-{
-private:
-    Valor valor_;
-
-public:
-    Folha(Valor valor) : valor_(valor) {}
-
-    Valor valor() override
-    {
-        return valor_;
-    }
-
-    No *esquerda() override
-    {
-        return this;
-    }
-
-    No *direita() override
-    {
-        return this;
-    }
-
-    No *inserir(Valor v) override
-    {
-        return new Arvore(v, new Folha(v), new Folha(v));
-    }
-
-    int altura() override
-    {
-        return -1;
-    }
-
-    bool pesquisar(Valor v) override
-    {
-        return false;
-    }
-
-    vector<Valor> infixa() override
-    {
-        return vector<Valor>();
-    }
-
-    vector<Valor> prefixa() override
-    {
-        return vector<Valor>();
-    }
-
-    vector<Valor> posfixa() override
-    {
-        return vector<Valor>();
-    }
-};
-
-int main()
-{
-    No *arvore = new Folha('\0');
-    string entrada;
-
-    while (!cin.eof())
-    {
-        getline(cin, entrada);
-        vector<string> a;
-        size_t pos = 0;
-        string token;
-        while ((pos = entrada.find(" ")) != string::npos)
-        {
-            token = entrada.substr(0, pos);
-            a.push_back(token);
-            entrada.erase(0, pos + 1);
-        }
-        a.push_back(entrada);
-
-        if (a[0] == "I")
-        {
-            arvore = arvore->inserir(a[1][0]);
-        }
-        else if (a[0] == "P")
-        {
-            Valor valor = a[1][0];
-            if (arvore->pesquisar(valor))
-            {
-                cout << valor << " existe" << endl;
-            }
-            else
-            {
-                cout << valor << " nao existe" << endl;
-            }
-        }
-        else if (a[0] == "INFIXA")
-        {
-            vector<Valor> infixa = arvore->infixa();
-            for (const auto &v : infixa)
-            {
-                cout << v << " ";
-            }
-            cout << endl;
-        }
-        else if (a[0] == "POSFIXA")
-        {
-            vector<Valor> posfixa = arvore->posfixa();
-            for (const auto &v : posfixa)
-            {
-                cout << v << " ";
-            }
-            cout << endl;
-        }
-        else if (a[0] == "PREFIXA")
-        {
-            vector<Valor> prefixa = arvore->prefixa();
-            for (const auto &v : prefixa)
-            {
-                cout << v << " ";
-            }
-            cout << endl;
-        }
-    }
-
+	}
+	
     return 0;
+}
+
+noArv* push(noArv *no, char letra)
+{
+
+	if (!no)
+	{
+
+		no = (noArv *) malloc(sizeof(noArv));
+		no->letra = letra;
+		no->direita = no->esquerda = NULL;
+
+	}
+	else if (no->letra > letra)
+		no->esquerda = push(no->esquerda, letra);
+	else
+		no->direita = push(no->direita, letra);
+
+	return no;
+
+}
+
+bool busca(noArv *no, char letra)
+{
+
+	bool direita, esquerda;
+
+	if (!no)
+		return false;
+
+	if (no->letra == letra)
+		return true;
+
+	if (no->letra > letra)
+		esquerda = busca(no->esquerda, letra);
+	else
+		direita = busca(no->direita, letra);
+
+}
+
+void printInfixa(char *letras)
+{
+
+	int z;
+	for (z = 0; z < i; ++z)
+		if (!z)
+			printf("%c", letrasInfixa[z]);
+		else
+			printf(" %c", letrasInfixa[z]);
+
+	i = 0;
+	printf("\n");
+
+}
+
+void printPrefixa(char *letras)
+{
+
+	int z;
+	for (z = 0; z < k; ++z)
+		if (!z)
+			printf("%c", letrasPrefixa[z]);
+		else
+			printf(" %c", letrasPrefixa[z]);
+
+	k = 0;
+	printf("\n");
+
+}
+
+void printPosfixa(char *letras)
+{
+
+	int z;
+	for (z = 0; z < j; ++z)
+		if (!z)
+			printf("%c", letrasPosfixa[z]);
+		else
+			printf(" %c", letrasPosfixa[z]);
+
+	j = 0;
+	printf("\n");
+
+}
+
+void infixa(noArv *no)
+{
+
+	if (no)
+	{
+
+		infixa(no->esquerda);
+		letrasInfixa[i++] = no->letra;
+		infixa(no->direita);
+
+	}
+
+}
+
+void posfixa(noArv *no)
+{
+
+	if (no)
+	{
+
+		posfixa(no->esquerda);
+		posfixa(no->direita);
+		letrasPosfixa[j++] = no->letra;
+
+	}
+
+}
+
+void prefixa(noArv *no)
+{
+
+	if (no)
+	{
+
+		letrasPrefixa[k++] = no->letra;
+		prefixa(no->esquerda);
+		prefixa(no->direita);
+
+	}
+
 }
