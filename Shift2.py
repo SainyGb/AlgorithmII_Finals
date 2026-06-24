@@ -23,8 +23,8 @@ class ShiftAprox:
         RK[0] = ((AT[0] << 1) | 1) & mask
         if RK[0] & C: yield f"exato no índice {i}"
         for a, d in pairwise(range(k + 1)):
-          RK[d] = (((AT[d] << 1) | 1) & mask) | ((RK[a] << 1) | 1) | ((AT[a] << 1) | 1) | AT[a]
-          if (RK[d] & C) and not (RK[a] & C): yield f"aprox. no índice {i}"
+          RK[d] = ((AT[d] << 1) & mask) | (RK[a] << 1) | AT[a] | 1
+          if (RK[d] & C) & ~(RK[a] & C): yield f"aprox. no índice {i}"
     self.match = ", ".join(execute_core())
 
 ShiftAprox("os testes testam os alunos com um texto de capacidade", "teste")
