@@ -8,7 +8,7 @@ class ShiftLeft:
     print(f"Matchs encontrados: {self.match}")
 
   def calculate_masks(self):
-    self.masks = {char: 0 for char in set(self.pattern)}
+    self.masks = dict.fromkeys(self.pattern, 0)
     for i, char in enumerate(self.pattern): self.masks[char] |= (1 << i)
     self.table = ", ".join(f"{m}: {v:b}" for m, v in self.masks.items())
 
