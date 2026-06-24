@@ -16,8 +16,7 @@ class ShiftAnd:
     def execute_core():
       R, OR = 0, 1 << (self.L - 1)
       for i, char in enumerate(self.T):
-        mask = self.masks.get(char, 0)
-        R = mask & ((R >> 1) | OR)
+        R = ((R >> 1) | OR) & self.masks.get(char, 0)
         if R & 1: yield f"no índice {i}"
     self.match = ", ".join(execute_core())
 
