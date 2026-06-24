@@ -15,7 +15,7 @@ class ShiftAprox:
     self.table = ", ".join(f"{m}: {v:b}" for m, v in self.masks.items())
 
   def shift_aprox(self, k: int):
-    def execute_core():
+    def shift_aprox_core():
       RK = [(1 << i) - 1 for i in range(k + 1)]
       C = 1 << (len(self.pattern) - 1)
       for i, char in enumerate(self.text):
@@ -25,6 +25,6 @@ class ShiftAprox:
         for a, d in pairwise(range(k + 1)):
           RK[d] = ((AT[d] << 1) & mask) | (RK[a] << 1) | AT[a] | 1
           if (RK[d] & C) & ~(RK[a] & C): yield f"aprox. no índice {i}"
-    self.match = ", ".join(execute_core())
+    self.match = ", ".join(shift_aprox_core())
 
 ShiftAprox("os testes testam os alunos com um texto de capacidade", "teste")
